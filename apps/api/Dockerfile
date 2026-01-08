@@ -19,4 +19,4 @@ RUN pnpm turbo run build --filter=@locus/api...
 
 
 EXPOSE 3000
-CMD ["pnpm", "--filter", "@locus/api", "start:prod"]
+CMD ["node", "apps/api/dist/src/main.js"]
