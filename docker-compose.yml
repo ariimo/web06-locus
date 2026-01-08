@@ -1,7 +1,7 @@
-version: '3.8'
 services:
   locus-api:
     image: locus-dev-registry.kr.ncr.ntruss.com/locus-api:latest
+    container_name: locus-api
     ports:
       - "3000:3000"
     env_file:
@@ -10,6 +10,7 @@ services:
 
   locus-nginx:
     image: locus-dev-registry.kr.ncr.ntruss.com/locus-nginx:latest
+    container_name: locus-nginx
     ports:
       - "80:80"
       - "443:443"
