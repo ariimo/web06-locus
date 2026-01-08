@@ -97,7 +97,7 @@ jobs:
             
             docker login ${{ secrets.DEV_REGISTRY }} -u ${{ secrets.NCP_ACCESS_KEY }} -p ${{ secrets.NCP_SECRET_KEY }}
             docker compose pull
-            docker compose up -d
+            docker compose up -d --remove-orphans
             
             docker image prune -f
             docker compose exec -T locus-api pnpm --filter @locus/api run db:push
