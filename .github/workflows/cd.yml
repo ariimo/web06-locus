@@ -2,7 +2,7 @@ name: CD - Deploy to NCP
 
 on:
   workflow_run:
-    workflows: ["CI - Build and Push"]
+    workflows: ['CI - Build and Push']
     types:
       - completed
 
@@ -13,30 +13,6 @@ jobs:
       github.event.workflow_run.event != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Get Github Actions IP
-        id: ip
-        run: |
-          PUBLIC_IP=$(curl -s https://ifconfig.me)
-          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
-
-      - name: Install and Configure NCP CLI
-        run: |
-          curl -O https://nsight.ncloud.com/cli/linux/ncloud_cli_linux.zip
-          unzip ncloud_cli_linux.zip
-          chmod +x ncloud
-          
-          ./ncloud configure set ncloud_access_key_id ${{ secrets.NCP_ACCESS_KEY }}
-          ./ncloud configure set ncloud_secret_access_key ${{ secrets.NCP_SECRET_KEY }}
-          ./ncloud configure set ncloud_api_url https://ncloud.apigw.ntruss.com
-
-      - name: Add Github Action IP to ACG
-        run: |
-          ./ncloud vserver addAccessControlGroupInboundRule \
-            --regionCode KR \
-            --vpcNo ${{ secrets.NCP_VPC_ID }} \
-            --accessControlGroupNo ${{ secrets.NCP_ACG_ID }} \
-            --accessControlGroupRuleList "protocolTypeCode='TCP', ipBlock='${{ steps.ip.outputs.public_ip }}/32', portRange='22'"
-
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -45,23 +21,15 @@ jobs:
           password: ${{ secrets.DEV_PASSWORD }}
           script: |
             cd ~/projects/web06-locus
-            git pull origin develop 
-            
+            git fetch origin develop
+            git checkout -f develop
+            git pull origin develop
+
             echo "${{ secrets.DEV_ENV_PROD }}" > .env.prod
-            
+
             docker login ${{ secrets.DEV_REGISTRY }} -u ${{ secrets.NCP_ACCESS_KEY }} -p ${{ secrets.NCP_SECRET_KEY }}
             docker compose pull
             docker compose up -d
-            
-            docker image prune -f
-            # API 서버 컨테이너 이름 확인 필요 (docker-compose.yml 기준)
-            docker compose exec -T locus-api pnpm --filter @locus/api run db:push
 
-      - name: Remove Github Action IP from ACG (Post-action)
-        if: always() # 배포 실패 시에도 실행
-        run: |
-          ./ncloud vserver removeAccessControlGroupInboundRule \
-            --regionCode KR \
-            --vpcNo ${{ secrets.NCP_VPC_ID }} \
-            --accessControlGroupNo ${{ secrets.NCP_ACG_ID }} \
-            --accessControlGroupRuleList "protocolTypeCode='TCP', ipBlock='${{ steps.ip.outputs.public_ip }}/32', portRange='22'"
+            docker image prune -f
+            docker compose exec -T locus-api pnpm --filter @locus/api run db:push
