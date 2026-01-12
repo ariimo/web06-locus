@@ -132,7 +132,7 @@ export default function MapViewport({ className = '' }: MapViewportProps) {
         },
       });
     }
-  };
+
 
   return (
     <>
