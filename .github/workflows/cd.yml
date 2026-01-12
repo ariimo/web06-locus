@@ -21,7 +21,7 @@ jobs:
 
       - name: Install and Configure NCP CLI
         run: |
-          curl -O https://nsight.ncloud.com/cli/linux/ncloud_cli_linux.zip
+          wget https://nsight.ncloud.com/cli/linux/ncloud_cli_linux.zip
           unzip ncloud_cli_linux.zip
           chmod +x ncloud
           
