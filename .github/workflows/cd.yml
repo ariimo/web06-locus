@@ -21,8 +21,9 @@ jobs:
 
       - name: Install and Configure NCP CLI
         run: |
-          wget https://nsight.ncloud.com/cli/linux/ncloud_cli_linux.zip
+          curl -L -O https://ncloud-cli.s3.amazonaws.com/ncloud-cli-linux.zip
           unzip ncloud_cli_linux.zip
+          
           chmod +x ncloud
           
           ./ncloud configure set ncloud_access_key_id ${{ secrets.NCP_ACCESS_KEY }}
