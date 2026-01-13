@@ -12,6 +12,10 @@ jobs:
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event != 'pull_request'
     runs-on: ubuntu-latest
+    env:
+      NCLOUD_ACCESS_KEY: ${{ secrets.NCP_ACCESS_KEY }}
+      NCLOUD_SECRET_KEY: ${{ secrets.NCP_SECRET_KEY }}
+      NCLOUD_API_URL: https://ncloud.apigw.ntruss.com
     steps:
       - name: Get Github Actions IP
         id: ip
@@ -28,15 +32,11 @@ jobs:
 
       - name: Add Github Action IP to ACG
         run: |
-            cd CLI_*/cli_linux
-            ./ncloud configure set ncloud_access_key_id ${{ secrets.NCP_ACCESS_KEY }}
-            ./ncloud configure set ncloud_secret_access_key ${{ secrets.NCP_SECRET_KEY }}
-            ./ncloud configure set ncloud_api_url https://ncloud.apigw.ntruss.com
-
-            ./ncloud vserver addAccessControlGroupInboundRule \
+          cd CLI_*/cli_linux
+          ./ncloud vserver addAccessControlGroupInboundRule \
             --regionCode KR \
-            --vpcNo ${{ secrets.NCP_VPC_ID }} \
-            --accessControlGroupNo ${{ secrets.NCP_ACG_ID }} \
+            --vpcNo "${{ secrets.NCP_VPC_ID }}" \
+            --accessControlGroupNo "${{ secrets.NCP_ACG_ID }}" \
             --accessControlGroupRuleList "protocolTypeCode='TCP', ipBlock='${{ steps.ip.outputs.public_ip }}/32', portRange='22'"
 
       - name: Deploy to Server via SSH
@@ -60,12 +60,11 @@ jobs:
             docker compose exec -T locus-api pnpm --filter @locus/api run db:push
 
       - name: Remove Github Action IP from ACG (Post-action)
-        if: always() # 배포 실패 시에도 실행
+        if: always()
         run: |
           cd CLI_*/cli_linux
-          
           ./ncloud vserver removeAccessControlGroupInboundRule \
             --regionCode KR \
-            --vpcNo ${{ secrets.NCP_VPC_ID }} \
-            --accessControlGroupNo ${{ secrets.NCP_ACG_ID }} \
+            --vpcNo "${{ secrets.NCP_VPC_ID }}" \
+            --accessControlGroupNo "${{ secrets.NCP_ACG_ID }}" \
             --accessControlGroupRuleList "protocolTypeCode='TCP', ipBlock='${{ steps.ip.outputs.public_ip }}/32', portRange='22'"
