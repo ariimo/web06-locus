@@ -34,6 +34,8 @@ jobs:
         run: |
           cd CLI_*/cli_linux
           ./ncloud vserver addAccessControlGroupInboundRule \
+            --accessKey "${{ secrets.NCP_ACCESS_KEY }}" \
+            --secretKey "${{ secrets.NCP_SECRET_KEY }}" \
             --regionCode KR \
             --vpcNo "${{ secrets.NCP_VPC_ID }}" \
             --accessControlGroupNo "${{ secrets.NCP_ACG_ID }}" \
@@ -64,6 +66,8 @@ jobs:
         run: |
           cd CLI_*/cli_linux
           ./ncloud vserver removeAccessControlGroupInboundRule \
+            --accessKey "${{ secrets.NCP_ACCESS_KEY }}" \
+            --secretKey "${{ secrets.NCP_SECRET_KEY }}" \
             --regionCode KR \
             --vpcNo "${{ secrets.NCP_VPC_ID }}" \
             --accessControlGroupNo "${{ secrets.NCP_ACG_ID }}" \
