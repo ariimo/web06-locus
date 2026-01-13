@@ -24,9 +24,9 @@ jobs:
           wget -O ncloud_cli.zip https://www.ncloud.com/api/support/download/files/cli/CLI_1.1.27_20251120.zip
           unzip ncloud_cli.zip
           
-          chmod +x cli_linux/ncloud
-          cp cli_linux/ncloud .
-          cp -r cli_linux/lib .
+          chmod +x CLI_*/cli_linux/ncloud
+          cp CLI_*/cli_linux/ncloud .
+          cp -r CLI_*/cli_linux/lib .
           
           ./ncloud configure set ncloud_access_key_id ${{ secrets.NCP_ACCESS_KEY }}
           ./ncloud configure set ncloud_secret_access_key ${{ secrets.NCP_SECRET_KEY }}
