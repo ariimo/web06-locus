@@ -25,16 +25,15 @@ jobs:
           unzip ncloud_cli.zip
           
           chmod +x CLI_*/cli_linux/ncloud
-          cp CLI_*/cli_linux/ncloud .
-          cp -r CLI_*/cli_linux/lib .
-          
-          ./ncloud configure set ncloud_access_key_id ${{ secrets.NCP_ACCESS_KEY }}
-          ./ncloud configure set ncloud_secret_access_key ${{ secrets.NCP_SECRET_KEY }}
-          ./ncloud configure set ncloud_api_url https://ncloud.apigw.ntruss.com
 
       - name: Add Github Action IP to ACG
         run: |
-          ./ncloud vserver addAccessControlGroupInboundRule \
+            cd CLI_*/cli_linux
+            ./ncloud configure set ncloud_access_key_id ${{ secrets.NCP_ACCESS_KEY }}
+            ./ncloud configure set ncloud_secret_access_key ${{ secrets.NCP_SECRET_KEY }}
+            ./ncloud configure set ncloud_api_url https://ncloud.apigw.ntruss.com
+
+            ./ncloud vserver addAccessControlGroupInboundRule \
             --regionCode KR \
             --vpcNo ${{ secrets.NCP_VPC_ID }} \
             --accessControlGroupNo ${{ secrets.NCP_ACG_ID }} \
@@ -63,6 +62,8 @@ jobs:
       - name: Remove Github Action IP from ACG (Post-action)
         if: always() # 배포 실패 시에도 실행
         run: |
+          cd CLI_*/cli_linux
+          
           ./ncloud vserver removeAccessControlGroupInboundRule \
             --regionCode KR \
             --vpcNo ${{ secrets.NCP_VPC_ID }} \
