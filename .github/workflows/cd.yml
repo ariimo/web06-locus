@@ -12,10 +12,6 @@ jobs:
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event != 'pull_request'
     runs-on: ubuntu-latest
-    env:
-      NCLOUD_ACCESS_KEY: ${{ secrets.NCP_ACCESS_KEY }}
-      NCLOUD_SECRET_KEY: ${{ secrets.NCP_SECRET_KEY }}
-      NCLOUD_API_URL: https://ncloud.apigw.ntruss.com
     steps:
       - name: Get Github Actions IP
         id: ip
@@ -27,20 +23,26 @@ jobs:
         run: |
           wget -O ncloud_cli.zip https://www.ncloud.com/api/support/download/files/cli/CLI_1.1.27_20251120.zip
           unzip ncloud_cli.zip
-          
           chmod +x CLI_*/cli_linux/ncloud
+          
+          # [핵심] NCP CLI가 인식하는 설정 파일을 수동으로 생성합니다.
+          mkdir -p ~/.ncloud
+          echo "[DEFAULT]" > ~/.ncloud/configure
+          echo "ncloud_access_key_id = ${{ secrets.NCP_ACCESS_KEY }}" >> ~/.ncloud/configure
+          echo "ncloud_secret_access_key = ${{ secrets.NCP_SECRET_KEY }}" >> ~/.ncloud/configure
+          echo "ncloud_api_url = https://ncloud.apigw.ntruss.com" >> ~/.ncloud/configure
 
       - name: Add Github Action IP to ACG
         run: |
           cd CLI_*/cli_linux
-          # 옵션(--accessKey)을 명령어(vserver) 뒤, 즉 맨 뒤쪽으로 보냅니다.
+          # 따옴표 꼬임을 방지하기 위해 규칙을 변수에 담습니다. (콤마 사이 공백 제거)
+          RULE="protocolTypeCode='TCP',ipBlock='${{ steps.ip.outputs.public_ip }}/32',portRange='22'"
+          
           ./ncloud vserver addAccessControlGroupInboundRule \
             --regionCode KR \
             --vpcNo "${{ secrets.NCP_VPC_ID }}" \
             --accessControlGroupNo "${{ secrets.NCP_ACG_ID }}" \
-            --accessControlGroupRuleList "protocolTypeCode='TCP', ipBlock='${{ steps.ip.outputs.public_ip }}/32', portRange='22'" \
-            --accessKey "${{ secrets.NCP_ACCESS_KEY }}" \
-            --secretKey "${{ secrets.NCP_SECRET_KEY }}"
+            --accessControlGroupRuleList "$RULE"
 
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -51,25 +53,21 @@ jobs:
           script: |
             cd ~/projects/web06-locus
             git pull origin develop 
-            
             echo "${{ secrets.DEV_ENV_PROD }}" > .env.prod
-            
             docker login ${{ secrets.DEV_REGISTRY }} -u ${{ secrets.NCP_ACCESS_KEY }} -p ${{ secrets.NCP_SECRET_KEY }}
             docker compose pull
             docker compose up -d
-            
             docker image prune -f
-            # API 서버 컨테이너 이름 확인 필요 (docker-compose.yml 기준)
             docker compose exec -T locus-api pnpm --filter @locus/api run db:push
 
       - name: Remove Github Action IP from ACG (Post-action)
         if: always()
         run: |
           cd CLI_*/cli_linux
+          RULE="protocolTypeCode='TCP',ipBlock='${{ steps.ip.outputs.public_ip }}/32',portRange='22'"
+          
           ./ncloud vserver removeAccessControlGroupInboundRule \
             --regionCode KR \
             --vpcNo "${{ secrets.NCP_VPC_ID }}" \
             --accessControlGroupNo "${{ secrets.NCP_ACG_ID }}" \
-            --accessControlGroupRuleList "protocolTypeCode='TCP', ipBlock='${{ steps.ip.outputs.public_ip }}/32', portRange='22'" \
-            --accessKey "${{ secrets.NCP_ACCESS_KEY }}" \
-            --secretKey "${{ secrets.NCP_SECRET_KEY }}"
+            --accessControlGroupRuleList "$RULE"
