@@ -118,6 +118,9 @@ Locus는 사용자가 어디에서 무엇을 생각했고,
 ![Turbo](https://img.shields.io/badge/Turbo-5C1678?style=for-the-badge&logo=turbo&logoColor=white)
 
 ---
+## Infrastructure Architecture
+<img width="1000" alt="image" src="https://github.com/user-attachments/assets/6ae1a7ed-32ab-485b-b234-bcea2655ee26" />
+---
 
 ## 🧭 Quick Start | 문서 바로가기
 
